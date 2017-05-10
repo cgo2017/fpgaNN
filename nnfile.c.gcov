@@ -1,0 +1,388 @@
+        -:    0:Source:nnfile.c
+        -:    0:Graph:wageN.gcno
+        -:    0:Data:wageN.gcda
+        -:    0:Runs:1
+        -:    0:Programs:1
+        -:    1:
+        -:    2:#include <stdio.h>
+        -:    3:#include <stdlib.h> 
+        -:    4:#include <time.h>
+        -:    5://#include <math.h>
+        -:    6:
+        -:    7:#define TEST 64
+        -:    8:#define NUMHID 10
+        -:    9:#define NUMOUT 1
+        -:   10:
+        -:   11://#define rando() ((double)rand()/((double)RAND_MAX+1))
+147151920:   12:double  exponential(int n, double x)
+        -:   13:{int i;
+        -:   14:
+147151920:   15:        double sum = 1.0f; // initialize sum of series
+        -:   16:
+1471519200:   17:        for ( i = n - 1; i > 0; --i )
+1324367280:   18:                sum = 1 + x * sum / i;
+        -:   19:
+147151920:   20:        return sum;
+        -:   21:}
+        1:   22:void neuralNetwork(int numOfPatterns, int numOfInputs , int select , double *inputValues,  double * outputValues, double *testInputValues, double *testOutputValues) {
+        -:   23:
+        1:   24:	int  NUMPAT = numOfPatterns;
+        1:   25:	int  NUMIN = numOfInputs;
+        1:   26:	int    i, j, k, p, np, op, ranpat[NUMPAT+1], epoch;
+        1:   27:	int    NumPattern = NUMPAT, NumInput = NUMIN, NumHidden1 = NUMHID, NumOutput = NUMOUT , NumHidden2 = NUMHID , NumHidden3 = NUMHID  ;
+        -:   28:	FILE *myfile;
+        1:   29:	double Input[NUMPAT+1][NUMIN+1] ;
+        1:   30:	double Target[NUMPAT+1][NUMOUT+1] ;
+        -:   31:	int batchSize;
+        1:   32:	if(select==1)
+        -:   33:	{
+    #####:   34:		batchSize = 64;
+        -:   35:	}
+        1:   36:	else if (select==2)
+        -:   37:	{
+        1:   38:		batchSize = 8;
+        -:   39:	}
+        -:   40:
+        -:   41:
+     4362:   42:	for(i=0;i<= NUMPAT ;i++)
+        -:   43:
+        -:   44:	{
+    43610:   45:		for (j=0;j<=NUMIN;j++)
+        -:   46:		{
+    39249:   47:			Input[i][j]=0;
+        -:   48:		}
+        -:   49:	}
+        1:   50:int index=0;
+     4361:   51:	for(i = 1; i <=  NUMPAT ; i++)
+        -:   52:	{
+    39240:   53:		for (j=1;j<=NUMIN;j++)
+    34880:   54:Input[i][j]=inputValues[index];
+     4360:   55:index++;
+        -:   56:	}
+        -:   57:
+        1:   58:index=0;
+     4362:   59:	for(i=0;i<= NUMPAT ;i++)
+        -:   60:
+        -:   61:	{
+    13083:   62:		for (j=0;j<=1;j++)
+        -:   63:		{
+     8722:   64:			Target[i][j]=0;
+        -:   65:		}
+        -:   66:	}
+     4361:   67:	for(i = 1; i <=  NUMPAT ; i++)
+        -:   68:	{
+     8720:   69:		for (j=1;j<=1;j++)
+        -:   70:		{
+     4360:   71:Target[i][j]=outputValues[index];
+     4360:   72:index++;
+        -:   73:
+        -:   74:		}
+        -:   75:	}
+        -:   76:
+        1:   77:	double SumH[NUMPAT+1][NUMHID+1], WeightIH[NUMIN+1][NUMHID+1], Hidden1[NUMPAT+1][NUMHID+1] , Hidden2[NUMPAT+1][NUMHID+1] , Hidden3[NUMPAT+1][NUMHID+1], SumH1[NUMPAT+1][NUMHID+1], WeightHH1[NUMIN+1][NUMHID+1],SumH2[NUMPAT+1][NUMHID+1], WeightHH2[NUMIN+1][NUMHID+1];
+        1:   78:	double SumO[NUMPAT+1][NUMOUT+1], WeightHO[NUMHID+1][NUMOUT+1], Output[NUMPAT+1][NUMOUT+1];
+        -:   79:	double DeltaO[NUMOUT+1], SumDOW[NUMHID+1], DeltaH1[NUMHID+1] , DeltaH2[NUMHID+1] , DeltaH3[NUMHID+1] ;
+        1:   80:	double DeltaWeightIH[NUMIN+1][NUMHID+1], DeltaWeightHO[NUMHID+1][NUMOUT+1],DeltaWeightHH1[NUMIN+1][NUMHID+1],DeltaWeightHH2[NUMIN+1][NUMHID+1];
+        1:   81:	double Error, eta = 0.0005, alpha =0.0009, smallwt =0.0004;
+        -:   82:
+        -:   83:
+       11:   84:	for( j = 1 ; j <= NumHidden1 ; j++ ) {    
+      100:   85:		for( i = 0 ; i <= NumInput ; i++ ) { 
+       90:   86:			DeltaWeightIH[i][j] = 0.0 ;
+        -:   87://			WeightIH[i][j] = 2.0 * ( rando() - 0.5 ) * smallwt ;
+       90:   88:  WeightIH[i][j] =0;
+        -:   89:		}
+        -:   90:	}
+       11:   91:	for( j = 1 ; j <= NumHidden2 ; j++ ) {    
+      120:   92:		for( i = 0 ; i <= NumHidden1 ; i++ ) {
+      110:   93:			DeltaWeightHH1[i][j] = 0.0 ;
+        -:   94:		//	WeightHH1[i][j] = 2.0 * ( rando() - 0.5 ) * smallwt ;
+      110:   95:  WeightIH[i][j] =0;
+        -:   96:		}
+        -:   97:	}
+        -:   98:
+       11:   99:	for( j = 1 ; j <= NumHidden3 ; j++ ) {    
+      120:  100:		for( i = 0 ; i <= NumHidden2 ; i++ ) {
+      110:  101:			DeltaWeightHH2[i][j] = 0.0 ;
+        -:  102:		//	WeightHH2[i][j] = 2.0 * ( rando() - 0.5 ) * smallwt ;
+      110:  103:  WeightIH[i][j] =0;
+        -:  104:		}
+        -:  105:	}
+        -:  106:
+        2:  107:	for( k = 1 ; k <= NumOutput ; k ++ ) {   
+       12:  108:		for( j = 0 ; j <= NumHidden3 ; j++ ) {
+       11:  109:			DeltaWeightHO[j][k] = 0.0 ;              
+        -:  110:		//	WeightHO[j][k] = 2.0 * ( rando() - 0.5 ) * smallwt ;
+       11:  111:  WeightIH[i][j] =0;
+        -:  112:		}
+        -:  113:	}
+     4361:  114:	for( p = 1 ; p <= NumPattern ; p++ ) {   
+     4360:  115:		ranpat[p] = p ;
+        -:  116:	}
+        -:  117:
+        -:  118:
+        -:  119:
+        -:  120:
+        -:  121:
+        -:  122:	int epoch1;
+        2:  123:	for( epoch1 = 0 ; epoch1< 1; epoch1++) {
+        -:  124:
+        -:  125:		int yt;
+      546:  126:		for(yt=1;yt<=(NUMPAT);yt=yt+batchSize)
+        -:  127:		{
+        -:  128:
+   545545:  129:			for( epoch = 0 ; epoch < 1000; epoch++) {   
+   545000:  130:				Error = 0.0 ;
+  5450000:  131:				for( np = yt ; np <= yt+batchSize ; np++ ) {    
+  4905000:  132:					p = ranpat[np];
+ 53955000:  133:					for( j = 1 ; j <= NumHidden1 ; j++ ) {    
+ 49050000:  134:						SumH[p][j] = WeightIH[0][j] ;
+441450000:  135:						for( i = 1 ; i <= NumInput ; i++ ) {
+392400000:  136:							SumH[p][j] += Input[p][i] * WeightIH[i][j] ;
+        -:  137:						}
+ 49050000:  138:						Hidden1[p][j] = 1.0/(1.0 + exponential(10,-SumH[p][j])) ;
+        -:  139:					}
+        -:  140:
+        -:  141:
+        -:  142:
+ 53955000:  143:					for( j = 1 ; j <= NumHidden2 ; j++ ) {    
+ 49050000:  144:						SumH1[p][j] = WeightHH1[0][j] ;
+539550000:  145:						for( i = 1 ; i <= NumHidden1 ; i++ ) {
+490500000:  146:							SumH1[p][j] += Hidden1[p][i] * WeightHH1[i][j] ;
+        -:  147:						}
+ 49050000:  148:						Hidden2[p][j] = 1.0/(1.0 + exponential(10,-SumH1[p][j])) ;
+        -:  149:					}
+ 53955000:  150:					for( j = 1 ; j <= NumHidden3 ; j++ ) {    
+ 49050000:  151:						SumH2[p][j] = WeightHH2[0][j] ;
+539550000:  152:						for( i = 1 ; i <= NumHidden2 ; i++ ) {
+490500000:  153:							SumH2[p][j] += Hidden2[p][i] * WeightHH2[i][j] ;
+        -:  154:						}//                Hidden3[p][j] = 1.0/(1.0 + exp(-SumH2[p][j])) ;
+ 49050000:  155:						Hidden3[p][j] = 1.0/(1.0 + exponential(10,-SumH2[p][j])) ;
+        -:  156:					}
+        -:  157:
+        -:  158:
+  9810000:  159:					for( k = 1 ; k <= NumOutput ; k++ ) {    
+  4905000:  160:						SumO[p][k] = WeightHO[0][k] ;
+ 53955000:  161:						for( j = 1 ; j <= NumHidden3 ; j++ ) {
+ 49050000:  162:							SumO[p][k] += Hidden3[p][j] * WeightHO[j][k] ;
+        -:  163:						}
+  4905000:  164:						Output[p][k] = SumO[p][k];      
+  4905000:  165:						Error += 0.5* (Target[p][k] - Output[p][k]) * (Target[p][k] - Output[p][k]) ;   
+  4905000:  166:						DeltaO[k] = (Target[p][k] - Output[p][k]) ; 
+        -:  167:					}
+        -:  168:
+ 53955000:  169:					for( j = 1 ; j <= NumHidden3 ; j++ ) {    
+ 49050000:  170:						SumDOW[j] = 0.0 ;
+ 98100000:  171:						for( k = 1 ; k <= NumOutput ; k++ ) {
+ 49050000:  172:							SumDOW[j] += WeightHO[j][k] * DeltaO[k] ;
+        -:  173:						}
+ 49050000:  174:						DeltaH3[j] = SumDOW[j] * Hidden3[p][j] * (1.0 - Hidden3[p][j]) ;
+        -:  175:					}
+ 53955000:  176:					for( j = 1 ; j <= NumHidden2 ; j++ ) {    
+ 49050000:  177:						SumDOW[j] = 0.0 ;
+539550000:  178:						for( k = 1 ; k <= NumHidden3 ; k++ ) {
+490500000:  179:							SumDOW[j] += WeightHH2[j][k] * DeltaH3[k] ;
+        -:  180:						}
+        -:  181:
+ 49050000:  182:						DeltaH2[j] = SumDOW[j] * Hidden2[p][j] * (1.0 - Hidden2[p][j]) ;
+        -:  183:					}
+ 53955000:  184:					for( j = 1 ; j <= NumHidden1 ; j++ ) {    
+ 49050000:  185:						SumDOW[j] = 0.0 ;
+539550000:  186:						for( k = 1 ; k <= NumHidden2 ; k++ ) {
+490500000:  187:							SumDOW[j] += WeightHH1[j][k] * DeltaH2[k] ;
+        -:  188:						}
+ 49050000:  189:						DeltaH1[j] = SumDOW[j] * Hidden1[p][j] * (1.0 - Hidden1[p][j]) ;
+        -:  190:
+        -:  191:					}
+        -:  192:
+        -:  193:
+ 53955000:  194:					for( j = 1 ; j <= NumHidden1 ; j++ ) {     
+ 49050000:  195:						DeltaWeightIH[0][j] = eta * DeltaH1[j] + alpha * DeltaWeightIH[0][j] ;
+ 49050000:  196:						WeightIH[0][j] += DeltaWeightIH[0][j] ;
+441450000:  197:						for( i = 1 ; i <= NumInput ; i++ ) { 
+392400000:  198:							DeltaWeightIH[i][j] = eta * Input[p][i] * DeltaH1[j] + alpha * DeltaWeightIH[i][j];
+392400000:  199:							WeightIH[i][j] += DeltaWeightIH[i][j] ;
+        -:  200:						}
+        -:  201:					}
+        -:  202:
+ 53955000:  203:					for( j = 1 ; j <= NumHidden2 ; j++ ) {     
+ 49050000:  204:						DeltaWeightHH1[0][j] = eta * DeltaH2[j] + alpha * DeltaWeightHH1[0][j] ;
+ 49050000:  205:						WeightHH1[0][j] += DeltaWeightHH1[0][j] ;
+539550000:  206:						for( i = 1 ; i <= NumHidden1 ; i++ ) {
+490500000:  207:							DeltaWeightHH1[i][j] = eta * Hidden1[p][i] * DeltaH2[j] + alpha * DeltaWeightHH1[i][j];
+490500000:  208:							WeightHH1[i][j] += DeltaWeightHH1[i][j] ;
+        -:  209:						}
+        -:  210:					}
+        -:  211:
+ 53955000:  212:					for( j = 1 ; j <= NumHidden3 ; j++ ) {     
+ 49050000:  213:						DeltaWeightHH2[0][j] = eta * DeltaH3[j] + alpha * DeltaWeightHH2[0][j] ;
+ 49050000:  214:						WeightHH2[0][j] += DeltaWeightHH2[0][j] ;
+539550000:  215:						for( i = 1 ; i <= NumHidden2 ; i++ ) {
+490500000:  216:							DeltaWeightHH2[i][j] = eta * Hidden2[p][i] * DeltaH3[j] + alpha * DeltaWeightHH2[i][j];
+490500000:  217:							WeightHH2[i][j] += DeltaWeightHH2[i][j] ;
+        -:  218:						}
+        -:  219:					}
+        -:  220:
+        -:  221:
+  9810000:  222:					for( k = 1 ; k <= NumOutput ; k ++ ) {   
+  4905000:  223:						DeltaWeightHO[0][k] = eta * DeltaO[k] + alpha * DeltaWeightHO[0][k] ;
+  4905000:  224:						WeightHO[0][k] += DeltaWeightHO[0][k] ;
+ 53955000:  225:						for( j = 1 ; j <= NumHidden3 ; j++ ) {
+ 49050000:  226:							DeltaWeightHO[j][k] = eta * Hidden3[p][j] * DeltaO[k] + alpha * DeltaWeightHO[j][k] ;
+ 49050000:  227:							WeightHO[j][k] += DeltaWeightHO[j][k] ;
+        -:  228:						}
+        -:  229:					}
+        -:  230:				}
+   545000:  231:				if( epoch%100 == 0 ) printf( "\nEpoch %-5d :   Error = %f", epoch, Error) ;
+        -:  232:			}
+        -:  233:		}    
+        -:  234:	}
+        -:  235:
+        -:  236:	/***********************PRINTING TARGET AND OUTPUT ************************/
+        -:  237:
+        -:  238:
+        -:  239:
+        -:  240:
+        2:  241:	for( k = 1 ; k <= NumOutput ; k++ ) {
+        1:  242:		printf("Target%-4d\tOutput%-4d\t", k, k) ;
+        -:  243:	}
+     4361:  244:	for( p = 1 ; p <= NumPattern ; p++ ) {
+     8720:  245:		for( k = 1 ; k <= NumOutput ; k++ ) {
+     4360:  246:			printf( "%f\t%f\t\n", Target[p][k], Output[p][k]) ;
+        -:  247:		}
+        -:  248:	}
+        -:  249:
+        -:  250:	/***********************TESTING*****************************************/
+        -:  251:
+        1:  252:	printf("\n\n\n\n\n\n\nTESTING\n\n\n\n\n");
+        1:  253:index=0;
+        -:  254:
+       66:  255:	for(i=0;i<= TEST ;i++)
+        -:  256:
+        -:  257:	{
+      650:  258:		for (j=0;j<=NUMIN;j++)
+        -:  259:		{
+      585:  260:			Input[i][j]=0;
+        -:  261:		}
+        -:  262:	}
+       65:  263:	for(i = 1; i <=  TEST ; i++)
+        -:  264:	{
+      576:  265:		for (j=1;j<=NUMIN;j++)
+        -:  266:			{
+      512:  267:Input[i][j]=testInputValues[index];
+      512:  268:index++;
+        -:  269:
+        -:  270:}
+        -:  271:	}
+        -:  272:
+        1:  273:index=0;
+       66:  274:	for(i=0;i<= TEST ;i++)
+        -:  275:
+        -:  276:	{
+      195:  277:		for (j=0;j<=1;j++)
+        -:  278:		{
+      130:  279:			Target[i][j]=0;
+        -:  280:		}
+        -:  281:	}
+       65:  282:	for(i = 1; i <=  TEST ; i++)
+        -:  283:	{
+      128:  284:		for (j=1;j<=1;j++)
+        -:  285:		{
+       64:  286:Target[i][j]=testOutputValues[index];
+       64:  287:index++;
+        -:  288:
+        -:  289:		}
+        -:  290:	}
+        -:  291:
+       65:  292:	for( p = 1 ; p <= TEST ; p++ ) {
+       64:  293:		for( k = 1 ; k <= NumOutput  ; k++ ) {
+        -:  294:		}
+        -:  295:	}
+        -:  296:
+        -:  297:
+        -:  298:
+        -:  299:
+        -:  300:
+        -:  301:
+        -:  302:
+        -:  303:
+        -:  304:
+        -:  305:
+        -:  306:
+        -:  307:
+        -:  308:
+        -:  309:
+       65:  310:	for( np = 1 ; np <= TEST ; np++ ) { 
+        -:  311:
+      704:  312:		for( j = 1 ; j <= NumHidden1 ; j++ ) {    
+      640:  313:			SumH[p][j] = WeightIH[0][j] ;
+     5760:  314:			for( i = 1 ; i <= NumInput ; i++ ) {
+     5120:  315:				SumH[p][j] += Input[p][i] * WeightIH[i][j] ;
+        -:  316:			}
+      640:  317:			Hidden1[p][j] = 1.0/(1.0 + exponential(10,-SumH[p][j])) ;
+        -:  318:		}
+        -:  319:
+        -:  320:
+        -:  321:
+      704:  322:		for( j = 1 ; j <= NumHidden2 ; j++ ) {   
+      640:  323:			SumH1[p][j] = WeightHH1[0][j] ;
+     7040:  324:			for( i = 1 ; i <= NumHidden1 ; i++ ) {
+     6400:  325:				SumH1[p][j] += Hidden1[p][i] * WeightHH1[i][j] ;
+        -:  326:			}
+      640:  327:			Hidden2[p][j] = 1.0/(1.0 + exponential(10,-SumH1[p][j])) ;
+        -:  328:		}
+      704:  329:		for( j = 1 ; j <= NumHidden3 ; j++ ) {    
+      640:  330:			SumH2[p][j] = WeightHH2[0][j] ;
+     7040:  331:			for( i = 1 ; i <= NumHidden2 ; i++ ) {
+     6400:  332:				SumH2[p][j] += Hidden2[p][i] * WeightHH2[i][j] ;
+        -:  333:			}
+      640:  334:			Hidden3[p][j] = 1.0/(1.0 + exponential(10,-SumH2[p][j])) ;
+        -:  335:		}
+        -:  336:
+        -:  337:
+      128:  338:		for( k = 1 ; k <= NumOutput ; k++ ) {    
+       64:  339:			SumO[p][k] = WeightHO[0][k] ;
+      704:  340:			for( j = 1 ; j <= NumHidden3 ; j++ ) {
+      640:  341:				SumO[p][k] += Hidden3[p][j] * WeightHO[j][k] ;
+        -:  342:			}
+       64:  343:			Output[p][k] = SumO[p][k];
+        -:  344:
+        -:  345:		}
+        -:  346:	}
+        -:  347:
+       65:  348:	for( p = 1 ; p <= TEST ; p++ ) {
+      128:  349:		for( k = 1 ; k <= NumOutput  ; k++ ) {
+       64:  350:			printf( "%f\t%f\t\n", Target[p][k], Output[p][k]) ;
+        -:  351:		}
+        -:  352:	}
+        -:  353:
+        -:  354:	/*****************FINDING MINIMUM FOR LOOP TILING*******************************/
+        -:  355:
+        -:  356:int tile,tile1;
+        1:  357:	if(select==1)
+        -:  358:	{
+    #####:  359:	float  min=1,min1=1;
+    #####:  360:		for( p = 1 ; p <= TEST ; p++ ) {
+    #####:  361:			for( k = 1 ; k <= NumOutput  ; k++ ) {
+    #####:  362:				if(Output[p][k]<min)
+        -:  363:				{
+    #####:  364:                                  min=Output[p][k];
+    #####:  365:                                  tile= 16*p;
+        -:  366:				}
+    #####:  367:                                   if(Target[p][k]<min1)
+        -:  368:                                {
+    #####:  369:                                  min1=Target[p][k];
+    #####:  370:                                  tile1= 16*p;
+        -:  371:                                }
+        -:  372:
+        -:  373:			}
+        -:  374:		}
+    #####:  375:printf("Optimal Tile Size  = %d\n",tile1);
+    #####:  376:printf("Obtained Tile Size  = %d",tile);
+        -:  377:
+        -:  378:	}
+        -:  379:
+        -:  380:	//    return 0;
+        1:  381:}
+        -:  382:
+        -:  383:/*******************************************************************************/
